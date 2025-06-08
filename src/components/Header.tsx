@@ -52,7 +52,7 @@ export default function Header({ onSearch, searchValue = '' }: HeaderProps) {
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex items-center h-16 gap-3">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
@@ -64,8 +64,8 @@ export default function Header({ onSearch, searchValue = '' }: HeaderProps) {
             </Link>
           </div>
 
-          {/* Search Bar */}
-          <div className="hidden md:flex flex-1 max-w-2xl mx-8">
+          {/* Search Bar - Always visible */}
+          <div className="flex-1 max-w-2xl md:mx-8">
             <form onSubmit={handleSearchSubmit} className="w-full">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -171,7 +171,7 @@ export default function Header({ onSearch, searchValue = '' }: HeaderProps) {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex-shrink-0">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="bg-gray-50 p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -187,25 +187,6 @@ export default function Header({ onSearch, searchValue = '' }: HeaderProps) {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 rounded-lg mt-2">
-              {/* Mobile Search */}
-              <div className="mb-4">
-                <form onSubmit={handleSearchSubmit}>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Buscar ofertas..."
-                      value={searchTerm}
-                      onChange={handleSearchChange}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500"
-                    />
-                  </div>
-                </form>
-              </div>
               
               {user && (
                 <Link
