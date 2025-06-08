@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { collection, query, orderBy, getDocs, limit, startAfter, QueryDocumentSnapshot, DocumentData, writeBatch, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -15,7 +15,7 @@ import FeaturedStores from '@/components/FeaturedStores';
 
 const DEALS_PER_PAGE = 12;
 
-export default function Home() {
+function HomeContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -372,8 +372,6 @@ export default function Home() {
           )}
         </div>
 
-
-
         {loading && (!hasLoadedOnce || deals.length === 0) ? (
           // Show skeleton loading
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -427,5 +425,33 @@ export default function Home() {
         ) : null}
       </main>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50">
+        <div className="animate-pulse">
+          <div className="h-16 bg-gray-200 mb-8"></div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="aspect-video bg-gray-200"></div>
+                  <div className="p-6 space-y-4">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
