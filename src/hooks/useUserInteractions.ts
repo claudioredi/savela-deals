@@ -197,10 +197,68 @@ export function useUserInteractions(userId: string | null, dealId: string) {
     }
   };
 
+  const unreportUnavailable = async () => {
+    if (!userId) return;
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        const interactionRef = doc(db, 'userInteractions', `${userId}_${dealId}`);
+        const dealRef = doc(db, 'deals', dealId);
+        
+        const interactionDoc = await transaction.get(interactionRef);
+        const dealDoc = await transaction.get(dealRef);
+        
+        if (!dealDoc.exists() || !interactionDoc.exists()) return;
+
+        const currentlyReported = interactionDoc.data()?.reportedUnavailable || false;
+        if (!currentlyReported) return; // Not reported
+
+        // Decrease deal unavailable count (but never below 0)
+        const currentReports = dealDoc.data()?.unavailableReports || 0;
+        if (currentReports > 0) {
+          transaction.update(dealRef, {
+            unavailableReports: increment(-1)
+          });
+        }
+
+        // Update user interaction to remove the report
+        const interactionData: any = {
+          userId,
+          dealId,
+          reportedUnavailable: false,
+          updatedAt: new Date(),
+        };
+
+        // Only include vote field if it exists and is not undefined
+        const existingVote = interactionDoc.data()?.vote;
+        if (existingVote !== undefined) {
+          interactionData.vote = existingVote;
+        }
+
+        transaction.update(interactionRef, interactionData);
+      });
+
+      // Update local state
+      setInteraction(prev => ({
+        id: `${userId}_${dealId}`,
+        userId,
+        dealId,
+        vote: prev?.vote,
+        reportedUnavailable: false,
+        createdAt: prev?.createdAt || new Date(),
+        updatedAt: new Date(),
+      }));
+
+    } catch (error) {
+      console.error('Error unreporting unavailable:', error);
+    }
+  };
+
   return {
     interaction,
     loading,
     vote,
     reportUnavailable,
+    unreportUnavailable,
   };
 } 

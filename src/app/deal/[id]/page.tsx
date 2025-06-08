@@ -24,13 +24,14 @@ export default function DealDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { interaction, loading: interactionLoading, vote, reportUnavailable } = useUserInteractions(
+  const { interaction, loading: interactionLoading, vote, reportUnavailable, unreportUnavailable } = useUserInteractions(
     user?.uid || null, 
     deal?.id || ''
   );
 
   const [isVoting, setIsVoting] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
+  const [showReportConfirm, setShowReportConfirm] = useState(false);
   
   // Local state for optimistic updates
   const [localDeal, setLocalDeal] = useState<Deal | null>(null);
@@ -173,8 +174,48 @@ export default function DealDetailPage() {
       return;
     }
     
-    if (isReporting || localInteraction?.reportedUnavailable || !localDeal) return;
+    if (isReporting || !localDeal) return;
+
+    // If already reported, unreport it
+    if (localInteraction?.reportedUnavailable) {
+      setIsReporting(true);
+      
+      // Optimistic update - update UI immediately
+      setLocalDeal(prev => prev ? {
+        ...prev,
+        unavailableReports: Math.max(0, (prev.unavailableReports || 0) - 1),
+      } : null);
+
+      setLocalInteraction(prev => ({
+        id: `${user!.uid}_${localDeal.id}`,
+        userId: user!.uid,
+        dealId: localDeal.id,
+        vote: prev?.vote,
+        reportedUnavailable: false,
+        createdAt: prev?.createdAt || new Date(),
+        updatedAt: new Date(),
+      }));
+
+      try {
+        await unreportUnavailable();
+      } catch (error) {
+        console.error('Error unreporting:', error);
+        // Revert optimistic update on error
+        setLocalDeal(deal);
+        setLocalInteraction(interaction);
+      } finally {
+        setIsReporting(false);
+      }
+    } else {
+      // Show confirmation for reporting
+      setShowReportConfirm(true);
+    }
+  };
+
+  const confirmReport = async () => {
+    if (!user || !localDeal) return;
     
+    setShowReportConfirm(false);
     setIsReporting(true);
     
     // Optimistic update - update UI immediately
@@ -184,8 +225,8 @@ export default function DealDetailPage() {
     } : null);
 
     setLocalInteraction(prev => ({
-      id: `${user.uid}_${localDeal.id}`,
-      userId: user.uid,
+      id: `${user!.uid}_${localDeal.id}`,
+      userId: user!.uid,
       dealId: localDeal.id,
       vote: prev?.vote,
       reportedUnavailable: true,
@@ -395,18 +436,23 @@ export default function DealDetailPage() {
               {/* Report Unavailable Button */}
               <button
                 onClick={handleReportUnavailable}
-                disabled={isReporting || interactionLoading || localInteraction?.reportedUnavailable}
+                disabled={isReporting || interactionLoading}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
                   localInteraction?.reportedUnavailable
-                    ? 'bg-orange-100 text-orange-700'
-                    : 'bg-white text-gray-600 hover:bg-orange-50 hover:text-orange-600'
-                } ${(isReporting || interactionLoading || localInteraction?.reportedUnavailable) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    ? 'bg-orange-100 text-orange-700 border border-orange-200 hover:bg-orange-200'
+                    : 'bg-white text-gray-600 hover:bg-orange-50 hover:text-orange-600 border border-transparent'
+                } ${(isReporting || interactionLoading) ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer hover:shadow-sm'}`}
+                title={localInteraction?.reportedUnavailable ? 'Click para revertir el reporte' : 'Reportar que el enlace no funciona'}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  {localInteraction?.reportedUnavailable ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  )}
                 </svg>
-                <span>No disponible</span>
-                {localDeal.unavailableReports > 0 && (
+                <span>{localInteraction?.reportedUnavailable ? 'Reportado' : 'Enlace roto'}</span>
+                {localDeal && localDeal.unavailableReports > 0 && (
                   <span className="text-sm">({localDeal.unavailableReports})</span>
                 )}
               </button>
@@ -432,6 +478,37 @@ export default function DealDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Report Confirmation Modal */}
+        {showReportConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowReportConfirm(false)}>
+            <div className="bg-white rounded-lg p-6 max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center mb-4">
+                <svg className="w-6 h-6 text-orange-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.866-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <h3 className="text-lg font-semibold text-gray-900">Reportar enlace roto</h3>
+              </div>
+              <p className="text-gray-600 mb-6">
+                ¿Estás seguro de que quieres reportar que esta oferta no está disponible o el enlace no funciona?
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowReportConfirm(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmReport}
+                  className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors"
+                >
+                  Sí, reportar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
