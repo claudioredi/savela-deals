@@ -255,7 +255,7 @@ export default function OfferCard({ deal }: OfferCardProps) {
 
         {/* Store Icon */}
         {deal.store && (
-          <div className="absolute bottom-3 left-3">
+          <div className="absolute bottom-3 right-3">
             <div 
               className="bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow-sm"
               title={deal.store.name}
@@ -267,7 +267,7 @@ export default function OfferCard({ deal }: OfferCardProps) {
 
         {/* Unavailable Warning Badge */}
         {(localDeal.unavailableReports || 0) >= 3 && (
-          <div className="absolute bottom-3 right-3">
+          <div className="absolute bottom-14 right-3">
             <div className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.866-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
