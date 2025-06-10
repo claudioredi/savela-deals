@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import { Deal } from '@/types';
 import { normalizeStore, normalizeStoreSync } from '@/services/storeService';
 import { useAuth } from '@/contexts/AuthContext';
-import { createPaginatedRecentDealsQuery, createRecentDealsCountQuery } from '@/utils/dealQueries';
+import { createPaginatedRecentDealsQuery, createRecentDealsCountQuery, createSearchQuery, filterDealsClientSide } from '@/utils/dealQueries';
 import Header from '@/components/Header';
 import OfferCard from '@/components/OfferCard';
 import FeaturedCarousel from '@/components/FeaturedCarousel';
@@ -23,13 +23,17 @@ function HomeContent() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredDeals, setFilteredDeals] = useState<Deal[]>([]);
+  const [searchResults, setSearchResults] = useState<Deal[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [searchLastDoc, setSearchLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [hasMoreSearch, setHasMoreSearch] = useState(true);
   const [totalDeals, setTotalDeals] = useState(0);
+  const [totalSearchResults, setTotalSearchResults] = useState(0);
   const [migrationsRun, setMigrationsRun] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   // Initialize search term from URL params
   useEffect(() => {
@@ -55,47 +59,101 @@ function HomeContent() {
     }
   };
 
-  // Function to migrate old deals that don't have voting fields or store info (only for authenticated users)
+  // Migration function to add missing IDs and normalize data
   const migrateDeals = async (dealsToMigrate: Deal[]) => {
     if (!user) return; // Only migrate if user is authenticated
     
     const batch = writeBatch(db);
-    let needsMigration = false;
+    let hasChanges = false;
 
-    dealsToMigrate.forEach((deal) => {
-      const needsUpdate = (
-        deal.upvotes === undefined || 
-        deal.downvotes === undefined || 
-        deal.unavailableReports === undefined ||
-        !deal.store
-      );
-
-      if (needsUpdate) {
-        needsMigration = true;
-        const dealRef = doc(db, 'deals', deal.id);
-        const updateData: any = {
-          upvotes: deal.upvotes || 0,
-          downvotes: deal.downvotes || 0,
-                      unavailableReports: deal.unavailableReports || 0,
-            views: deal.views || 0,
-        };
-
-        // Add store info if missing
-        if (!deal.store) {
-          updateData.store = normalizeStoreSync(deal.purchaseLink);
-        }
-
-        batch.update(dealRef, updateData);
+    for (const deal of dealsToMigrate) {
+      const docRef = doc(db, 'deals', deal.id);
+      const updates: any = {};
+      
+      // Ensure store is normalized
+      if (!deal.store || deal.store.id === 'unknown') {
+        const normalizedStore = normalizeStoreSync(deal.purchaseLink || '');
+        updates.store = normalizedStore;
+        hasChanges = true;
       }
-    });
 
-    if (needsMigration) {
+      // Add any other migrations here
+
+      if (Object.keys(updates).length > 0) {
+        batch.update(docRef, updates);
+      }
+    }
+
+    if (hasChanges) {
       try {
         await batch.commit();
-        console.log('Deals migrated successfully');
+        console.log('Deals migration completed');
       } catch (error) {
-        console.error('Error migrating deals:', error);
+        console.error('Error during deals migration:', error);
       }
+    }
+  };
+
+  // Function to search deals in database
+  const searchDeals = async (searchTerm: string, pageToFetch = 1, isNewSearch = true) => {
+    if (!searchTerm.trim()) {
+      setSearchResults([]);
+      setTotalSearchResults(0);
+      return;
+    }
+
+    try {
+      setSearchLoading(true);
+      
+      let searchQuery;
+      const lastDocToUse = isNewSearch ? null : searchLastDoc;
+      
+      // Use broader search by fetching more results and filtering client-side
+      searchQuery = createSearchQuery(searchTerm, lastDocToUse, DEALS_PER_PAGE);
+
+      const querySnapshot = await getDocs(searchQuery);
+      const allDeals: Deal[] = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        allDeals.push({
+          id: doc.id,
+          title: data.title,
+          description: data.description,
+          previousPrice: data.previousPrice,
+          currentPrice: data.currentPrice,
+          discountPercentage: data.discountPercentage,
+          category: data.category,
+          purchaseLink: data.purchaseLink,
+          imageUrl: data.imageUrl,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          createdBy: data.createdBy,
+          createdByName: data.createdByName,
+          store: data.store || normalizeStoreSync(data.purchaseLink || ''),
+          upvotes: data.upvotes || 0,
+          downvotes: data.downvotes || 0,
+          unavailableReports: data.unavailableReports || 0,
+          views: data.views || 0,
+        });
+      });
+
+      // Filter results client-side for comprehensive search
+      const filteredResults = filterDealsClientSide(allDeals, searchTerm);
+
+      if (isNewSearch) {
+        setSearchResults(filteredResults);
+        setTotalSearchResults(filteredResults.length);
+      } else {
+        setSearchResults(prev => [...prev, ...filteredResults]);
+      }
+
+      setSearchLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1] || null);
+      setHasMoreSearch(querySnapshot.docs.length >= DEALS_PER_PAGE && filteredResults.length > 0);
+
+    } catch (error) {
+      console.error('Error searching deals:', error);
+    } finally {
+      setSearchLoading(false);
     }
   };
 
@@ -184,20 +242,15 @@ function HomeContent() {
     }
   }, [user?.uid, deals.length, migrationsRun]); // Only trigger when user ID changes or we first get deals
 
+  // Handle search when search term changes
   useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredDeals(deals);
+    if (searchTerm.trim() !== '') {
+      searchDeals(searchTerm, 1, true);
     } else {
-      const filtered = deals.filter(deal =>
-        deal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deal.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deal.createdByName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (deal.store?.name && deal.store.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-      setFilteredDeals(filtered);
+      setSearchResults([]);
+      setTotalSearchResults(0);
     }
-  }, [deals, searchTerm]);
+  }, [searchTerm]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -216,20 +269,30 @@ function HomeContent() {
       if (page > totalPagesLoaded && hasMore) {
         fetchDeals(page);
       }
+    } else {
+      // For search pagination, load more search results if needed
+      const totalSearchPagesLoaded = Math.ceil(searchResults.length / DEALS_PER_PAGE);
+      if (page > totalSearchPagesLoaded && hasMoreSearch) {
+        searchDeals(searchTerm, page, false);
+      }
     }
   };
 
   // Calculate pagination for search results or regular results
-  const itemsToShow = searchTerm.trim() !== '' ? filteredDeals : deals;
+  const itemsToShow = searchTerm.trim() !== '' ? searchResults : deals;
+  const totalItems = searchTerm.trim() !== '' ? totalSearchResults : totalDeals;
   const totalPages = Math.ceil(
     searchTerm.trim() !== '' 
-      ? filteredDeals.length / DEALS_PER_PAGE
+      ? Math.max(totalSearchResults / DEALS_PER_PAGE, Math.ceil(searchResults.length / DEALS_PER_PAGE))
       : Math.max(totalDeals / DEALS_PER_PAGE, Math.ceil(deals.length / DEALS_PER_PAGE))
   );
   
   const startIndex = (currentPage - 1) * DEALS_PER_PAGE;
   const endIndex = startIndex + DEALS_PER_PAGE;
   const currentPageItems = itemsToShow.slice(startIndex, endIndex);
+
+  // Show loading state for search or regular loading
+  const isLoading = searchTerm.trim() !== '' ? searchLoading : loading;
 
   const Pagination = () => {
     if (totalPages <= 1) return null;
@@ -334,7 +397,7 @@ function HomeContent() {
                 onClick={() => setSearchTerm('')}
                 className="text-blue-600 hover:text-blue-800 underline"
               >
-                {filteredDeals.length} resultados
+                {totalItems} resultados
               </button>
             </>
           )}
@@ -382,12 +445,12 @@ function HomeContent() {
           </h1>
           {searchTerm.trim() !== '' && (
             <p className="text-lg text-gray-600">
-              {filteredDeals.length} ofertas encontradas
+              {totalItems} ofertas encontradas
             </p>
           )}
         </div>
 
-        {loading && (!hasLoadedOnce || deals.length === 0) ? (
+        {isLoading && (!hasLoadedOnce || itemsToShow.length === 0) ? (
           // Show skeleton loading
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
@@ -411,7 +474,7 @@ function HomeContent() {
             </div>
             <Pagination />
           </>
-        ) : hasLoadedOnce && !loading && deals.length === 0 ? (
+        ) : hasLoadedOnce && !isLoading && itemsToShow.length === 0 ? (
           // Show empty state only when we're sure there are no deals
           <div className="text-center py-12">
             <div className="max-w-md mx-auto">
