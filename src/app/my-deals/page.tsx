@@ -71,6 +71,7 @@ export default function MyDealsPage() {
             upvotes: data.upvotes || 0,
             downvotes: data.downvotes || 0,
             unavailableReports: data.unavailableReports || 0,
+            views: data.views || 0,
             createdAt: data.createdAt?.toDate() || new Date(),
             createdBy: data.createdBy,
             createdByName: data.createdByName,

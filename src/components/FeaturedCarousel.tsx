@@ -59,6 +59,7 @@ export default function FeaturedCarousel() {
             upvotes: data.upvotes || 0,
             downvotes: data.downvotes || 0,
             unavailableReports: data.unavailableReports || 0,
+            views: data.views || 0,
           });
         });
 
@@ -127,7 +128,7 @@ export default function FeaturedCarousel() {
               <div className="relative overflow-hidden bg-gradient-to-b from-gray-700/90 via-gray-600/70 via-gray-500/40 via-gray-300/20 to-gray-50 px-4 sm:px-6 lg:px-8 pt-12 pb-16">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-white">Ofertas Destacadas</h2>
+            <h2 className="text-2xl font-bold text-white">Las Mejores Ofertas</h2>
           </div>
           <div className="overflow-hidden px-8">
             <div className="flex gap-6">
@@ -155,7 +156,7 @@ export default function FeaturedCarousel() {
     <div className="relative overflow-hidden bg-gradient-to-b from-gray-700/90 via-gray-600/70 via-gray-500/40 via-gray-300/20 to-gray-50 px-4 sm:px-6 lg:px-8 pt-12 pb-16 mb-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white">Ofertas Destacadas</h2>
+          <h2 className="text-2xl font-bold text-white">Las Mejores Ofertas</h2>
         </div>
 
           <div className="relative">

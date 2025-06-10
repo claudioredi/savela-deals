@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Deal } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
@@ -14,6 +14,7 @@ import { useUserInteractions } from '@/hooks/useUserInteractions';
 import Header from '@/components/Header';
 import { useLoginPrompt } from '@/contexts/LoginPromptContext';
 import { normalizeStoreSync } from '@/services/storeService';
+import { trackDealView } from '@/services/viewsService';
 
 export default function DealDetailPage() {
   const params = useParams();
@@ -71,6 +72,7 @@ export default function DealDetailPage() {
             upvotes: data.upvotes || 0,
             downvotes: data.downvotes || 0,
             unavailableReports: data.unavailableReports || 0,
+            views: data.views || 0,
             createdAt: data.createdAt?.toDate() || new Date(),
             createdBy: data.createdBy,
             createdByName: data.createdByName,
@@ -246,6 +248,17 @@ export default function DealDetailPage() {
     }
   };
 
+  const handleViewOffer = async () => {
+    if (!localDeal) return;
+    
+    // Track the view
+    try {
+      await trackDealView(localDeal.id);
+    } catch (error) {
+      console.error('Error tracking view:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -361,6 +374,7 @@ export default function DealDetailPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                onClick={handleViewOffer}
               >
                 Ver Oferta
               </a>

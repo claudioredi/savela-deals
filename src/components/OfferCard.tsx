@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserInteractions } from '@/hooks/useUserInteractions';
 import { useLoginPrompt } from '@/contexts/LoginPromptContext';
+import { trackDealView } from '@/services/viewsService';
 
 interface OfferCardProps {
   deal: Deal;
@@ -183,6 +184,17 @@ export default function OfferCard({ deal }: OfferCardProps) {
     }
   };
 
+  const handleViewOffer = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // Track the view
+    try {
+      await trackDealView(deal.id);
+    } catch (error) {
+      console.error('Error tracking view:', error);
+    }
+  };
+
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't navigate if clicking on interactive elements
     const target = e.target as HTMLElement;
@@ -297,7 +309,7 @@ export default function OfferCard({ deal }: OfferCardProps) {
             target="_blank"
             rel="noopener noreferrer"
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-            onClick={(e) => e.stopPropagation()}
+            onClick={handleViewOffer}
           >
             Ver Oferta
           </a>

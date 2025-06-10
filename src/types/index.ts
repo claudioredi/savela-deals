@@ -33,6 +33,8 @@ export interface Deal {
   downvotes: number;
   // Unavailable reports
   unavailableReports: number;
+  // Views tracking
+  views: number;
 }
 
 export interface UserInteraction {
@@ -52,6 +54,8 @@ export type DealCategory =
   | 'belleza'
   | 'deportes'
   | 'libros'
+  | 'turismo'
+  | 'juegos'
   | 'otros';
 
 export const DEAL_CATEGORIES: Record<DealCategory, string> = {
@@ -61,5 +65,7 @@ export const DEAL_CATEGORIES: Record<DealCategory, string> = {
   'belleza': 'Belleza y Cuidado Personal',
   'deportes': 'Deportes y Fitness',
   'libros': 'Libros y Educación',
+  'turismo': 'Turismo y Recreación',
+  'juegos': 'Juegos y Juguetes',
   'otros': 'Otros'
 }; 

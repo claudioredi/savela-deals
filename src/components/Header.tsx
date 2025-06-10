@@ -49,13 +49,19 @@ export default function Header({ onSearch, searchValue = '' }: HeaderProps) {
     onSearch?.(searchTerm);
   };
 
+  const handleLogoClick = () => {
+    // Clear search and return to home
+    setSearchTerm('');
+    onSearch?.('');
+  };
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-16 gap-3">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href="/" className="flex items-center">
+            <Link href="/" className="flex items-center" onClick={handleLogoClick}>
               <img
                 src="/savela-logo.svg"
                 alt="Savela"

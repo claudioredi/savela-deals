@@ -44,6 +44,18 @@ const CATEGORY_CONFIG = {
     gradient: 'from-yellow-500 to-orange-600',
     icon: '📚'
   },
+  'turismo': {
+    title: 'Turismo y Recreación',
+    description: 'Viajes, hoteles y aventuras',
+    gradient: 'from-cyan-500 to-blue-600',
+    icon: '✈️'
+  },
+  'juegos': {
+    title: 'Juegos y Juguetes',
+    description: 'Diversión para toda la familia',
+    gradient: 'from-indigo-500 to-purple-600',
+    icon: '🎮'
+  },
   'otros': {
     title: 'Otras Categorías',
     description: 'Ofertas variadas',
@@ -92,7 +104,8 @@ export default function CategoryHighlights() {
             store: data.store,
             upvotes: data.upvotes || 0,
             downvotes: data.downvotes || 0,
-            unavailableReports: data.unavailableReports || 0
+            unavailableReports: data.unavailableReports || 0,
+            views: data.views || 0
           });
         });
 
@@ -319,7 +332,7 @@ export default function CategoryHighlights() {
                     {/* View more button */}
                     <div className="pt-2 border-t border-gray-100">
                       <button
-                        className="w-full text-center text-sm font-medium text-blue-600 hover:text-blue-700 py-2"
+                        className="w-full text-center text-sm font-medium text-blue-600 hover:text-blue-700 py-2 cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleCategoryClick(category);

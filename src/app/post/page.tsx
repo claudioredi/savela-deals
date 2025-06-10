@@ -237,6 +237,12 @@ export default function PostPage() {
     if (lowerText.includes('libro') || lowerText.includes('curso') || lowerText.includes('educación')) {
       return 'libros';
     }
+    if (lowerText.includes('viaje') || lowerText.includes('hotel') || lowerText.includes('vuelo') || lowerText.includes('turismo') || lowerText.includes('vacaciones') || lowerText.includes('resort') || lowerText.includes('aventura') || lowerText.includes('excursión')) {
+      return 'turismo';
+    }
+    if (lowerText.includes('juego') || lowerText.includes('juguete') || lowerText.includes('puzzle') || lowerText.includes('videojuego') || lowerText.includes('consola') || lowerText.includes('muñeca') || lowerText.includes('lego') || lowerText.includes('nintendo') || lowerText.includes('playstation') || lowerText.includes('xbox')) {
+      return 'juegos';
+    }
     
     return 'otros';
   };
@@ -289,7 +295,8 @@ export default function PostPage() {
         createdByName: user.displayName || user.email,
         upvotes: 0,
         downvotes: 0,
-        unavailableReports: 0,
+                    unavailableReports: 0,
+            views: 0,
       };
 
       // Add optional fields only if they have values

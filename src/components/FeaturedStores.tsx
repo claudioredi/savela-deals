@@ -5,6 +5,7 @@ import { collection, query, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Deal } from '@/types';
 import StoreIcon from './StoreIcon';
+import SmartImage from './SmartImage';
 
 interface StoreStats {
   storeId: string;
@@ -53,6 +54,7 @@ export default function FeaturedStores() {
               upvotes: data.upvotes || 0,
               downvotes: data.downvotes || 0,
               unavailableReports: data.unavailableReports || 0,
+              views: data.views || 0,
             });
           }
         });
@@ -146,17 +148,34 @@ export default function FeaturedStores() {
         <h2 className="text-xl font-bold text-gray-900 mb-6">Stores Destacados</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 animate-pulse">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
-                <div className="flex-1">
-                  <div className="h-4 bg-gray-200 rounded w-24 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-16"></div>
+            <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-pulse">
+              {/* Store Header */}
+              <div className="p-4 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-24 mb-1"></div>
+                    <div className="h-3 bg-gray-200 rounded w-16"></div>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded w-full"></div>
-                <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+              {/* Deals Preview */}
+              <div className="p-4">
+                <div className="space-y-3">
+                  {[...Array(2)].map((_, j) => (
+                    <div key={j} className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Footer */}
+              <div className="bg-gray-50 px-4 py-2">
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
               </div>
             </div>
           ))}
@@ -236,56 +255,70 @@ export default function FeaturedStores() {
 
             {/* Latest Deals Preview */}
             <div className="p-4">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {store.latestDeals.slice(0, 2).map((deal, index) => (
                   <div
                     key={deal.id}
-                    className="flex items-center justify-between text-sm hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                    className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDealClick(deal.id);
                     }}
                   >
-                    <div className="flex-1 min-w-0 pr-2">
-                      <p className="font-medium text-gray-900 truncate">
-                        {deal.title}
-                      </p>
-                      <p className="text-gray-500 text-xs truncate">
-                        {deal.category}
-                      </p>
-                    </div>
-                    <div className="flex-shrink-0 text-right">
-                      <div className="font-bold text-blue-600">
-                        {formatPrice(deal.currentPrice)}
-                      </div>
-                      {deal.discountPercentage && (
-                        <div className="text-xs text-red-600 font-medium">
-                          -{deal.discountPercentage}%
+                    {/* Deal Image */}
+                    <div className="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
+                      {deal.imageUrl ? (
+                        <SmartImage
+                          src={deal.imageUrl}
+                          alt={deal.title}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
                         </div>
                       )}
+                    </div>
+
+                    {/* Deal Info */}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium text-gray-900 truncate">
+                        {deal.title}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-lg font-bold text-blue-600">
+                          {formatPrice(deal.currentPrice)}
+                        </span>
+                        {deal.discountPercentage && (
+                          <span className="text-xs font-medium text-red-600">
+                            -{deal.discountPercentage}%
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
                 
-                {store.latestDeals.length > 2 && (
-                  <div className="text-center pt-2">
-                    <span className="text-xs text-gray-500">
-                      +{store.latestDeals.length - 2} ofertas más
-                    </span>
-                  </div>
-                )}
+                {/* View more button */}
+                <div className="pt-2 border-t border-gray-100">
+                  <button
+                    className="w-full text-center text-sm font-medium text-blue-600 hover:text-blue-700 py-2 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStoreClick(store.storeName);
+                    }}
+                  >
+                    Ver todas las ofertas →
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Quick Stats Footer */}
-            <div className="bg-gray-50 px-4 py-2">
-              <div className="flex items-center justify-between text-xs text-gray-600">
-                <span>Ver todas las ofertas</span>
-                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
+
           </div>
         ))}
       </div>

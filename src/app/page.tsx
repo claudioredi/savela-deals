@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import OfferCard from '@/components/OfferCard';
 import FeaturedCarousel from '@/components/FeaturedCarousel';
+import MostViewedCarousel from '@/components/MostViewedCarousel';
 import CategoryHighlights from '@/components/CategoryHighlights';
 import FeaturedStores from '@/components/FeaturedStores';
 
@@ -74,7 +75,8 @@ function HomeContent() {
         const updateData: any = {
           upvotes: deal.upvotes || 0,
           downvotes: deal.downvotes || 0,
-          unavailableReports: deal.unavailableReports || 0,
+                      unavailableReports: deal.unavailableReports || 0,
+            views: deal.views || 0,
         };
 
         // Add store info if missing
@@ -139,6 +141,7 @@ function HomeContent() {
           upvotes: data.upvotes || 0,
           downvotes: data.downvotes || 0,
           unavailableReports: data.unavailableReports || 0,
+          views: data.views || 0,
         });
       });
 
@@ -197,7 +200,8 @@ function HomeContent() {
         deal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deal.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deal.createdByName.toLowerCase().includes(searchTerm.toLowerCase())
+        deal.createdByName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (deal.store?.name && deal.store.name.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       setFilteredDeals(filtered);
     }
@@ -352,18 +356,37 @@ function HomeContent() {
       <Header onSearch={handleSearch} searchValue={searchTerm} />
       
       {/* Featured Carousel - Full width, only show on homepage without search */}
-      {searchTerm.trim() === '' && <FeaturedCarousel />}
+      {searchTerm.trim() === '' && (
+        <div className="mb-12">
+          <FeaturedCarousel />
+        </div>
+      )}
+      
+      {/* Most Viewed Carousel - Full width, only show on homepage without search */}
+      {searchTerm.trim() === '' && (
+        <div className="mb-16">
+          <MostViewedCarousel />
+        </div>
+      )}
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Category Highlights - Only show on homepage without search */}
-        {searchTerm.trim() === '' && <CategoryHighlights />}
+        {searchTerm.trim() === '' && (
+          <div className="mb-16">
+            <CategoryHighlights />
+          </div>
+        )}
         
         {/* Featured Stores - Only show on homepage without search */}
-        {searchTerm.trim() === '' && <FeaturedStores />}
+        {searchTerm.trim() === '' && (
+          <div className="mb-16">
+            <FeaturedStores />
+          </div>
+        )}
         
         <div className="mb-8">
           <h1 className="text-xl font-bold text-gray-900 mb-4">
-            {searchTerm.trim() !== '' ? `Resultados para "${searchTerm}"` : 'Todas las Ofertas'}
+            {searchTerm.trim() !== '' ? `Resultados para "${searchTerm}"` : 'Lo mas Reciente'}
           </h1>
           {searchTerm.trim() !== '' && (
             <p className="text-lg text-gray-600">
