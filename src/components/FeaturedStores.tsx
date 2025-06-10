@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, getDocs, orderBy, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getDocs } from 'firebase/firestore';
 import { Deal } from '@/types';
 import StoreIcon from './StoreIcon';
 import SmartImage from './SmartImage';
+import { createRecentDealsQuery } from '@/utils/dealQueries';
 
 interface StoreStats {
   storeId: string;
@@ -24,12 +24,8 @@ export default function FeaturedStores() {
   useEffect(() => {
     const fetchFeaturedStores = async () => {
       try {
-        // Fetch all deals to analyze store statistics
-        const dealsQuery = query(
-          collection(db, 'deals'),
-          orderBy('createdAt', 'desc'),
-          limit(200) // Limit to recent deals for performance
-        );
+        // Fetch all recent deals to analyze store statistics using centralized utility
+        const dealsQuery = createRecentDealsQuery([], 'createdAt', 'desc', 200);
 
         const querySnapshot = await getDocs(dealsQuery);
         const allDeals: Deal[] = [];
@@ -266,14 +262,14 @@ export default function FeaturedStores() {
                     }}
                   >
                     {/* Deal Image */}
-                    <div className="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="flex-shrink-0 w-12 h-12 bg-white rounded-lg overflow-hidden">
                       {deal.imageUrl ? (
                         <SmartImage
                           src={deal.imageUrl}
                           alt={deal.title}
                           width={48}
                           height={48}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">

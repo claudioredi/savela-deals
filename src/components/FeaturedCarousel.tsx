@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, getDocs, where, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getDocs } from 'firebase/firestore';
 import { Deal } from '@/types';
 import SmartImage from './SmartImage';
+import { createRecentDealsQuery } from '@/utils/dealQueries';
 
 export default function FeaturedCarousel() {
   const [featuredDeals, setFeaturedDeals] = useState<Deal[]>([]);
@@ -26,23 +26,15 @@ export default function FeaturedCarousel() {
   useEffect(() => {
     const fetchFeaturedDeals = async () => {
       try {
-        // Calculate date one week ago
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-        // Query deals from the last week
-        const dealsQuery = query(
-          collection(db, 'deals'),
-          where('createdAt', '>=', Timestamp.fromDate(oneWeekAgo)),
-          orderBy('createdAt', 'desc')
-        );
+        // Query recent deals using centralized utility
+        const dealsQuery = createRecentDealsQuery();
 
         const querySnapshot = await getDocs(dealsQuery);
-        const weeklyDeals: Deal[] = [];
+        const recentDeals: Deal[] = [];
 
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          weeklyDeals.push({
+          recentDeals.push({
             id: doc.id,
             title: data.title,
             description: data.description,
@@ -64,7 +56,7 @@ export default function FeaturedCarousel() {
         });
 
         // Calculate vote score (upvotes - downvotes) and sort by highest score
-        const sortedDeals = weeklyDeals
+        const sortedDeals = recentDeals
           .map(deal => ({
             ...deal,
             voteScore: (deal.upvotes || 0) - (deal.downvotes || 0)
@@ -128,7 +120,7 @@ export default function FeaturedCarousel() {
               <div className="relative overflow-hidden bg-gradient-to-b from-gray-700/90 via-gray-600/70 via-gray-500/40 via-gray-300/20 to-gray-50 px-4 sm:px-6 lg:px-8 pt-12 pb-16">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-white">Las Mejores Ofertas</h2>
+            <h2 className="text-2xl font-bold text-white">Las Mejores</h2>
           </div>
           <div className="overflow-hidden px-8">
             <div className="flex gap-6">
@@ -156,7 +148,8 @@ export default function FeaturedCarousel() {
     <div className="relative overflow-hidden bg-gradient-to-b from-gray-700/90 via-gray-600/70 via-gray-500/40 via-gray-300/20 to-gray-50 px-4 sm:px-6 lg:px-8 pt-12 pb-16 mb-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white">Las Mejores Ofertas</h2>
+          <h2 className="text-2xl font-bold text-white">Las Mejores</h2>
+          <p className="text-white/90 text-sm mt-1">Ofertas con mejor puntuación de la comunidad</p>
         </div>
 
           <div className="relative">
@@ -206,16 +199,16 @@ export default function FeaturedCarousel() {
                           className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-105 flex-1 min-w-0"
                         >
                           {/* Image */}
-                          <div className="relative aspect-[3/2] bg-gray-100">
+                          <div className="relative aspect-[3/2] bg-white">
                             {deal.imageUrl ? (
                               <SmartImage
                                 src={deal.imageUrl}
                                 alt={deal.title}
                                 fill
-                                className="object-cover"
+                                className="object-contain"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                              <div className="w-full h-full flex items-center justify-center bg-white">
                                 <div className="text-center text-gray-400">
                                   <svg className="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />

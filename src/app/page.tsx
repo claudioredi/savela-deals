@@ -2,11 +2,12 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, orderBy, getDocs, limit, startAfter, QueryDocumentSnapshot, DocumentData, writeBatch, doc } from 'firebase/firestore';
+import { getDocs, QueryDocumentSnapshot, DocumentData, writeBatch, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Deal } from '@/types';
 import { normalizeStore, normalizeStoreSync } from '@/services/storeService';
 import { useAuth } from '@/contexts/AuthContext';
+import { createPaginatedRecentDealsQuery, createRecentDealsCountQuery } from '@/utils/dealQueries';
 import Header from '@/components/Header';
 import OfferCard from '@/components/OfferCard';
 import FeaturedCarousel from '@/components/FeaturedCarousel';
@@ -104,19 +105,10 @@ function HomeContent() {
       
       let dealsQuery;
       if (pageToFetch === 1 || isNewSearch) {
-        dealsQuery = query(
-          collection(db, 'deals'),
-          orderBy('createdAt', 'desc'),
-          limit(DEALS_PER_PAGE)
-        );
+        dealsQuery = createPaginatedRecentDealsQuery(null, DEALS_PER_PAGE);
       } else {
         if (!lastDoc) return;
-        dealsQuery = query(
-          collection(db, 'deals'),
-          orderBy('createdAt', 'desc'),
-          startAfter(lastDoc),
-          limit(DEALS_PER_PAGE)
-        );
+        dealsQuery = createPaginatedRecentDealsQuery(lastDoc, DEALS_PER_PAGE);
       }
 
       const querySnapshot = await getDocs(dealsQuery);
@@ -158,7 +150,7 @@ function HomeContent() {
 
       // Update total count for pagination info
       if (pageToFetch === 1 || isNewSearch) {
-        const totalQuery = query(collection(db, 'deals'));
+        const totalQuery = createRecentDealsCountQuery();
         const totalSnapshot = await getDocs(totalQuery);
         setTotalDeals(totalSnapshot.size);
       }

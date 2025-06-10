@@ -564,7 +564,7 @@ export default function PostPage() {
                                 src={imageUrl}
                                 alt="Preview"
                                 fill
-                                className="object-cover"
+                                className="object-contain"
                               />
                             </div>
                           </div>
