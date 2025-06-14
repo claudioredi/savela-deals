@@ -35,6 +35,9 @@ export interface Deal {
   unavailableReports: number;
   // Views tracking
   views: number;
+  // Keywords for search optimization
+  keywords?: string[];
+  keywordsGeneratedAt?: Date;
 }
 
 export interface UserInteraction {

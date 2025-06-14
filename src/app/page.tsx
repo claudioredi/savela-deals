@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import { Deal } from '@/types';
 import { normalizeStore, normalizeStoreSync } from '@/services/storeService';
 import { useAuth } from '@/contexts/AuthContext';
-import { createPaginatedRecentDealsQuery, createRecentDealsCountQuery, createSearchQuery, filterDealsClientSide } from '@/utils/dealQueries';
+import { createPaginatedRecentDealsQuery, createRecentDealsCountQuery, createSearchQuery, filterDealsClientSide, filterDealsWithKeywords } from '@/utils/dealQueries';
 import Header from '@/components/Header';
 import OfferCard from '@/components/OfferCard';
 import FeaturedCarousel from '@/components/FeaturedCarousel';
@@ -134,11 +134,13 @@ function HomeContent() {
           downvotes: data.downvotes || 0,
           unavailableReports: data.unavailableReports || 0,
           views: data.views || 0,
+          keywords: data.keywords || [],
+          keywordsGeneratedAt: data.keywordsGeneratedAt?.toDate(),
         });
       });
 
       // Filter results client-side for comprehensive search
-      const filteredResults = filterDealsClientSide(allDeals, searchTerm);
+      const filteredResults = filterDealsWithKeywords(allDeals, searchTerm);
 
       if (isNewSearch) {
         setSearchResults(filteredResults);
@@ -192,6 +194,8 @@ function HomeContent() {
           downvotes: data.downvotes || 0,
           unavailableReports: data.unavailableReports || 0,
           views: data.views || 0,
+          keywords: data.keywords || [],
+          keywordsGeneratedAt: data.keywordsGeneratedAt?.toDate(),
         });
       });
 

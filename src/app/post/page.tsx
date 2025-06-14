@@ -7,6 +7,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { User, DEAL_CATEGORIES, DealCategory, Store } from '@/types';
 import { normalizeStore, normalizeStoreSync, getAllStores } from '@/services/storeService';
+import { generateKeywordsForDeal } from '@/services/keywordService';
 import Header from '@/components/Header';
 import SmartImage from '@/components/SmartImage';
 import StoreIcon from '@/components/StoreIcon';
@@ -282,6 +283,9 @@ export default function PostPage() {
       // Ensure we have store information
       const finalStore = store || await normalizeStore(url);
       
+      // Generate keywords before saving
+      const keywords = await generateKeywordsForDeal(title, description, category);
+      
       const dealData: any = {
         title: title.trim(),
         description: description.trim(),
@@ -290,13 +294,15 @@ export default function PostPage() {
         purchaseLink: url,
         imageUrl: imageUrl.trim() || null,
         store: finalStore,
+        keywords: keywords,
+        keywordsGeneratedAt: new Date(),
         createdAt: serverTimestamp(),
         createdBy: user.id,
         createdByName: user.displayName || user.email,
         upvotes: 0,
         downvotes: 0,
-                    unavailableReports: 0,
-            views: 0,
+        unavailableReports: 0,
+        views: 0,
       };
 
       // Add optional fields only if they have values

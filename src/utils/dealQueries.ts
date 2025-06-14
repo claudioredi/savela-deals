@@ -1,4 +1,4 @@
-import { query, collection, where, orderBy, limit, startAfter, Timestamp, QueryDocumentSnapshot, DocumentData, QueryConstraint } from 'firebase/firestore';
+import { query, collection, where, orderBy, limit, startAfter, Timestamp, QueryDocumentSnapshot, DocumentData, QueryConstraint, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 // Configurable constants
@@ -200,5 +200,84 @@ export const filterDealsClientSide = (deals: any[], searchTerm: string): any[] =
     deal.category?.toLowerCase().includes(searchLower) ||
     deal.createdByName?.toLowerCase().includes(searchLower) ||
     (deal.store?.name && deal.store.name.toLowerCase().includes(searchLower))
+  );
+};
+
+/**
+ * Creates a query for searching deals by keywords
+ * @param searchTerm - The keyword to search for
+ * @param lastDoc - Last document from previous page (for pagination)
+ * @param limitCount - Number of documents per page
+ * @returns Firestore query for keyword search
+ */
+export const createKeywordSearchQuery = (
+  searchTerm: string,
+  lastDoc: QueryDocumentSnapshot<DocumentData> | null = null,
+  limitCount: number = 20
+) => {
+  const searchLower = searchTerm.toLowerCase();
+  
+  const constraints: QueryConstraint[] = [
+    where('createdAt', '>=', getRecentDealsTimestamp()),
+    where('keywords', 'array-contains', searchLower),
+    orderBy('createdAt', 'desc'),
+  ];
+
+  if (lastDoc) {
+    constraints.push(startAfter(lastDoc));
+  }
+
+  constraints.push(limit(limitCount));
+
+  return query(collection(db, 'deals'), ...constraints);
+};
+
+/**
+ * Creates a hybrid search query that combines keyword and title search
+ * @param searchTerm - The search term to look for
+ * @param lastDoc - Last document from previous page (for pagination)
+ * @param limitCount - Number of documents per page
+ * @returns Firestore query for hybrid search
+ */
+export const createHybridSearchQuery = async (
+  searchTerm: string,
+  lastDoc: QueryDocumentSnapshot<DocumentData> | null = null,
+  limitCount: number = 20
+) => {
+  const searchLower = searchTerm.toLowerCase();
+  
+  // Primero buscar por keywords (más relevante)
+  const keywordQuery = createKeywordSearchQuery(searchTerm, lastDoc, limitCount);
+  const keywordResults = await getDocs(keywordQuery);
+  
+  if (keywordResults.size >= limitCount) {
+    return keywordQuery;
+  }
+  
+  // Si no hay suficientes resultados, buscar también por título
+  const titleQuery = createTitleSearchQuery(searchTerm, lastDoc, limitCount - keywordResults.size);
+  return titleQuery;
+};
+
+/**
+ * Enhanced client-side filtering that includes keyword matching
+ * @param deals - Array of deals to filter
+ * @param searchTerm - The search term to match against
+ * @returns Filtered array of deals
+ */
+export const filterDealsWithKeywords = (deals: any[], searchTerm: string): any[] => {
+  if (!searchTerm.trim()) return deals;
+  
+  const searchLower = searchTerm.toLowerCase();
+  
+  return deals.filter(deal =>
+    deal.title?.toLowerCase().includes(searchLower) ||
+    deal.description?.toLowerCase().includes(searchLower) ||
+    deal.category?.toLowerCase().includes(searchLower) ||
+    deal.createdByName?.toLowerCase().includes(searchLower) ||
+    (deal.store?.name && deal.store.name.toLowerCase().includes(searchLower)) ||
+    (deal.keywords && deal.keywords.some((keyword: string) => 
+      keyword.toLowerCase().includes(searchLower)
+    ))
   );
 }; 

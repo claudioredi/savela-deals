@@ -117,23 +117,21 @@ export default function MostViewedCarousel() {
     }).format(price);
   };
 
-
-
   if (loading) {
     return (
-      <div className="relative overflow-hidden bg-gradient-to-b from-purple-700/90 via-purple-600/70 via-purple-500/40 via-purple-300/20 to-gray-50 px-4 sm:px-6 lg:px-8 pt-12 pb-16">
+      <div className="relative overflow-hidden bg-gray-100 px-4 sm:px-6 lg:px-8 pt-12 pb-16">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-white">Más Visitadas</h2>
+            <h2 className="text-4xl font-bold text-gray-900">Más Visitadas</h2>
           </div>
           <div className="overflow-hidden px-8">
             <div className="flex gap-6">
               {[...Array(itemsPerSlide)].map((_, i) => (
-                <div key={i} className="flex-1 min-w-0 bg-white/20 rounded-xl p-4 animate-pulse">
-                  <div className="aspect-[3/2] bg-white/30 rounded-lg mb-3"></div>
+                <div key={i} className="flex-1 min-w-0 bg-white/80 rounded-xl p-4 animate-pulse">
+                  <div className="aspect-[3/2] bg-gray-200 rounded-lg mb-3"></div>
                   <div className="space-y-2">
-                    <div className="h-4 bg-white/30 rounded w-full"></div>
-                    <div className="h-4 bg-white/30 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                   </div>
                 </div>
               ))}
@@ -149,11 +147,11 @@ export default function MostViewedCarousel() {
   }
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-b from-purple-700/90 via-purple-600/70 via-purple-500/40 via-purple-300/20 to-gray-50 px-4 sm:px-6 lg:px-8 pt-12 pb-16 mb-4">
+    <div className="relative overflow-hidden bg-gray-100 px-4 sm:px-6 lg:px-8 pt-12 pb-16 mb-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white">Más Visitadas</h2>
-          <p className="text-white/90 text-sm mt-1">Las ofertas que más llaman la atención</p>
+          <h2 className="text-4xl font-bold text-gray-900">Más Visitadas</h2>
+          <p className="text-gray-600 text-sm mt-1">Las ofertas que más llaman la atención</p>
         </div>
 
         <div className="relative">
@@ -221,8 +219,6 @@ export default function MostViewedCarousel() {
                               </div>
                             </div>
                           )}
-
-
 
                           {/* Discount badge */}
                           {deal.discountPercentage && (

@@ -141,7 +141,7 @@ export default function FeaturedStores() {
   if (loading) {
     return (
       <div className="mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Stores Destacados</h2>
+        <h2 className="text-3xl font-bold text-gray-900 mb-6">Stores Destacados</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-pulse">
@@ -184,7 +184,7 @@ export default function FeaturedStores() {
     return (
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Stores Destacados</h2>
+          <h2 className="text-3xl font-bold text-gray-900">Stores Destacados</h2>
           <p className="text-sm text-gray-600">No hay stores destacados disponibles</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
@@ -207,7 +207,7 @@ export default function FeaturedStores() {
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Stores Destacados</h2>
+        <h2 className="text-3xl font-bold text-gray-900">Stores Destacados</h2>
         <p className="text-sm text-gray-600">Los stores con más ofertas populares</p>
       </div>
 

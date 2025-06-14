@@ -269,7 +269,7 @@ export default function CategoryHighlights() {
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-2xl">{config.icon}</span>
                   <div>
-                    <h3 className="text-lg font-bold">{config.title}</h3>
+                    <h3 className="text-xl font-bold">{config.title}</h3>
                     <p className="text-white/90 text-sm">{config.description}</p>
                   </div>
                 </div>
